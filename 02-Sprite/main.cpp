@@ -11,9 +11,14 @@
 ================================================================ */
 
 #include <windows.h>
-#include <d3d9.h>
-#include <d3dx9.h>
+#include <iostream>
+#include <string>
 
+#include <d3d9.h>
+#include "fs.cpp"
+
+
+#include <d3dx9.h>
 #include <fstream>
 #include "debug.h"
 #include "Game.h"
@@ -38,6 +43,7 @@
 
 CGame *game;
 CGameObject *mario;
+using namespace std;
 
 LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -67,47 +73,36 @@ void LoadResources()
 	CAnimations * animations = CAnimations::GetInstance();
 	
 	LPDIRECT3DTEXTURE9 texMario = textures->Get(ID_TEX_MARIO);
-
-	// readline => id, left, top, right 
-
-	sprites->Add(10001, 246, 154, 259, 181, texMario);
-	sprites->Add(10002, 275, 154, 290, 181, texMario);
-	sprites->Add(10003, 304, 154, 321, 181, texMario);
-
-	sprites->Add(10011, 186, 154, 199, 181, texMario);
-	sprites->Add(10012, 155, 154, 170, 181, texMario);
-	sprites->Add(10013, 125, 154, 140, 181, texMario);
-
-	LPDIRECT3DTEXTURE9 texMisc = textures->Get(ID_TEX_MISC);
-	sprites->Add(20001, 300, 117, 315, 132, texMisc);
-	sprites->Add(20002, 318, 117, 333, 132, texMisc);
-	sprites->Add(20003, 336, 117, 351, 132, texMisc);
-	sprites->Add(20004, 354, 117, 369, 132, texMisc);
-	
-
+	LPDIRECT3DTEXTURE9 texMisc = textures->Get(ID_TEX_MISC); 
+	LPDIRECT3DTEXTURE9 texts[2] = { texMario, texMisc };
 
 	LPANIMATION ani;
+	// readline => id, left, top, right 
 
-	ani = new CAnimation(100);
-	ani->Add(10001);
-	ani->Add(10002);
-	ani->Add(10003);
-	animations->Add(500, ani);
+	CFile* data_texture = new CFile("data.txt");
+	data_texture->read();
+	vector<string> texttures = data_texture->split();
+	
 
-	ani = new CAnimation(100);
-	ani->Add(10011);
-	ani->Add(10012);
-	ani->Add(10013);
-	animations->Add(501, ani);
+	for (int i = 0; i < texttures.size()-5;i++) {
+		sprites->Add(atoi(texttures[i].c_str()), atoi(texttures[i + 1].c_str()), atoi(texttures[i + 2].c_str()), atoi(texttures[i + 3].c_str()), atoi(texttures[i + 4].c_str()), texts[0]);
+	}
 
-	/*
-	ani = new CAnimation(100);
-	ani->Add(20001,1000);
-	ani->Add(20002);
-	ani->Add(20003);
-	ani->Add(20004);
-	animations->Add(510, ani);
-	*/
+
+	
+	CFile* data_ani = new CFile("animations.txt");
+	data_ani->read();
+	vector<string> anis = data_ani->split();
+
+	for (int j = 0; j < anis.size() - 5; j = j+5) {
+		ani = new CAnimation(atoi(anis[j].c_str()));
+		ani->Add(atoi(anis[j+1].c_str()));
+		ani->Add(atoi(anis[j+2].c_str()));
+		ani->Add(atoi(anis[j+3].c_str()));
+		animations->Add(atoi(anis[j+4].c_str()), ani);
+	}
+
+
 	
 	mario = new CGameObject();
 	mario->AddAnimation(500);
@@ -255,12 +250,12 @@ int Run()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hWnd = CreateGameWindow(hInstance, nCmdShow, SCREEN_WIDTH, SCREEN_HEIGHT);
-
+	
 	game = CGame::GetInstance();
 	game->Init(hWnd);
 
 	LoadResources();
 	Run();
-
+	
 	return 0;
 }
